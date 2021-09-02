@@ -323,6 +323,27 @@ class WCS_Importer {
 			}
 		}
 
+        $found_order_id = '';
+        $order_id_field = self::$fields['order_id'];
+        if (!empty($order_id_field)) {
+            $input_order_id = $data[$order_id_field];
+            if (!empty($input_order_id)) {
+                $parent_order = wc_get_order($input_order_id);
+                if ($parent_order) {
+                    $found_user_id = $parent_order->get_user_id();
+                    if ($found_user_id != $user_id) {
+                        $result['warning'][] = sprintf(__('Parent order was found but for a different user ID, possibly because that order was deleted or imported under a new ID. Clear or correct "%s" field in CSV, or correct manually after import.', 'wcs-import-export'),
+                            $order_id_field);
+                    } else {
+                        $found_order_id = $parent_order->get_order_number();
+                    }
+                } else {
+                    $result['warning'][] = sprintf(__('Parent order was not found, possibly because that order was deleted or imported under a new ID. Clear or correct "%s" field in CSV, or correct manually after import.', 'wcs-import-export'),
+                        $order_id_field);
+                }
+            }
+        }
+
 		if ( empty( $result['error'] ) || self::$test_mode ) {
 			try {
 				if ( ! self::$test_mode ) {
@@ -342,7 +363,8 @@ class WCS_Importer {
 							'billing_period'   => ( ! empty( $data[ self::$fields['billing_period'] ] ) ) ? $data[ self::$fields['billing_period'] ] : '',
 							'created_via'      => 'importer',
 							'customer_note'    => ( ! empty( $data[ self::$fields['customer_note'] ] ) ) ? $data[ self::$fields['customer_note'] ] : '',
-							'currency'         => ( ! empty( $data[ self::$fields['order_currency'] ] ) ) ? $data[ self::$fields['order_currency'] ] : '',
+                            'currency'         => ( ! empty( $data[ self::$fields['order_currency'] ] ) ) ? $data[ self::$fields['order_currency'] ] : '',
+                            'order_id'         => $found_order_id,
 						)
 					);
 
