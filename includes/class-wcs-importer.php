@@ -330,10 +330,16 @@ class WCS_Importer {
             if (!empty($input_order_id)) {
                 $parent_order = wc_get_order($input_order_id);
                 if ($parent_order) {
-                    $found_order_id = $parent_order->get_order_number();
+                    $found_user_id = $parent_order->get_user_id();
+                    if ($found_user_id != $user_id) {
+                        $result['warning'][] = sprintf(__('Parent order was found but for a different user ID, possibly because that order was deleted or imported under a new ID. Clear or correct "%s" field in CSV, or correct manually after import.', 'wcs-import-export'),
+                            $order_id_field);
+                    } else {
+                        $found_order_id = $parent_order->get_order_number();
+                    }
                 } else {
-                    $result['warning'][] = sprintf(__('Parent order was not found, possibly because it was deleted or imported under a new ID. Clear or correct "%s" field in CSV or correct manually after import. Not correcting will prevent renewal (customer_id: "%s", start_date: "%s", order_id: "%s").', 'wcs-import-export'),
-                        $order_id_field, $user_id, $dates_to_update['start'], $input_order_id);
+                    $result['warning'][] = sprintf(__('Parent order was not found, possibly because that order was deleted or imported under a new ID. Clear or correct "%s" field in CSV, or correct manually after import.', 'wcs-import-export'),
+                        $order_id_field);
                 }
             }
         }
